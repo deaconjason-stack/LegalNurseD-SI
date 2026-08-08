@@ -1,51 +1,74 @@
-# LegalNurseD SI — Portable MVP
+# LegalNurseD SI — Evidence Intelligence Engine
 
-LegalNurseD SI is a zero-cost, standalone demonstration of an evidence-linked legal nurse consulting workspace developed for MediSyncD Technologies, LLC.
+LegalNurseD SI is a source-grounded medicolegal nursing review platform being developed by MediSyncD Technologies, LLC. The current public build is **Monumental Milestone 3** and remains a synthetic/de-identified prototype.
 
-## MVP capabilities
+## Monumental Milestone 3 capabilities
 
-- Responsive command center and case workspace
-- Synthetic long-term-care fall case
-- Guided “Lexi” review assistant simulation
-- Evidence-linked medical chronology
-- Clinical red-flag review prompts
-- Record inventory and missing-record tracking
-- Reviewer notes saved only in the local browser
-- Draft attorney-ready case-review packet
-- Print / Save-as-PDF export for the synthetic packet
-- No build tools, paid hosting, or external application dependencies required
+- Multiple case workspaces
+- Local-first PDF, TXT, MD, CSV and JSON evidence intake
+- Browser-side PDF page text extraction using Mozilla PDF.js
+- SHA-256 document fingerprints for provenance
+- Page-level evidence indexing and citations
+- Search across indexed record text
+- Machine-surfaced clinical review prompts across falls, pain/functional change, neurologic monitoring, provider notification, transfer/escalation, pressure injury, medication, repositioning, change in condition, continence/toileting, elopement and abuse/neglect terminology
+- Possible fall-time conflict prompts
+- Neutral record-gap prompts when expected concepts are not located in the indexed record set
+- Machine-extracted chronology candidates tied to source pages
+- Human disposition workflow: retain for review, dismiss prompt, reset
+- Reviewer identity and timestamp capture
+- Evidence-aware Lexi retrieval with source citations
+- Evidence ledger
+- Timestamped local audit trail
+- AES-GCM encrypted browser vault using a PBKDF2-derived key
+- JSON review-bundle export
+- Printable draft professional review packet
+- Automated GitHub Pages deployment
 
-## Run locally
+## PDF processing
 
-Open `index.html` directly in a modern browser. The current MVP is intentionally packaged as a single standalone file so it can be copied, demonstrated, and deployed almost anywhere.
+PDF processing occurs in the user's browser. The prototype loads Mozilla PDF.js from jsDelivr, then passes the selected file's local bytes to PDF.js for parsing. The application does not intentionally upload selected case files to GitHub or to an application server.
 
-## Zero-cost deployment choices
-
-This repository is intentionally portable. It can be deployed to GitHub Pages, Cloudflare Pages, or another static host without changing the application.
+This version extracts embedded PDF text. **Scanned image-only PDFs requiring OCR are not yet supported.**
 
 ## Safety boundary
 
-**Synthetic data only.** This prototype is not configured for protected health information, privileged legal material, production security, HIPAA workflows, expert opinions, or autonomous legal conclusions. Do not upload or enter real medical records or identifiable patient information.
+**Use synthetic or fully de-identified material only.** This public prototype is not configured as a production environment for protected health information, privileged legal material, HIPAA-regulated workflows, legal hold, enterprise identity, production key management, expert opinions, or autonomous legal conclusions.
 
-LegalNurseD SI is designed as professional decision support. It does not determine negligence, causation, liability, damages, or legal strategy. Human clinical and legal review remains required.
+LegalNurseD SI provides clinical record organization and decision support. It does not determine negligence, causation, liability, damages, standard of care, or legal strategy. Human clinical and legal review remains required.
 
-## Secure product roadmap
+Machine-surfaced prompts must be validated against the original source documents before professional use.
 
-The production build should add:
+## Defensibility design
 
-1. Authentication and MFA
-2. Tenant-isolated case workspaces
-3. Encrypted record storage
-4. OCR / document ingestion with page-level provenance
-5. Evidence citations that always point back to source pages
-6. Immutable audit events
-7. Role-based approvals and report sign-off
-8. Controlled AI processing with no training on client data
-9. Retention, legal hold, and secure deletion controls
-10. Jurisdiction-specific standards and professional governance
+The product is being built around a core rule: **every material machine-surfaced item must lead back to evidence.** The M3 prototype therefore carries document fingerprints, file names, page numbers, machine-vs-human status, reviewer disposition, reviewer identity and audit events.
+
+## Production roadmap
+
+Before sensitive production use, the architecture should add:
+
+1. Enterprise authentication, MFA/passkeys and role-based authorization
+2. Tenant-isolated workspaces and server-side case persistence
+3. HIPAA-appropriate hosting and BAAs where applicable
+4. Encrypted object storage and managed key infrastructure
+5. OCR for scanned records with page/image provenance
+6. Immutable or tamper-evident audit logging
+7. Attorney/LNC role workflows and final report sign-off
+8. Controlled model inference with no client-data training by default
+9. Retention, deletion, legal-hold and export governance
+10. Jurisdiction/date-aware standards and policy research controls
+11. Validation corpus using synthetic/de-identified cases
+12. Independent security, privacy, clinical and legal review before production release
+
+## Technology
+
+- Static single-page web application
+- GitHub Pages deployment
+- Web Crypto API for local prototype encryption and hashing
+- Mozilla PDF.js for browser-side PDF parsing
+- No paid application hosting required for the public prototype
 
 ## Status
 
-Current version: **Portable MVP v0.2**
+Current version: **Monumental Milestone 3 — Evidence Intelligence Engine**
 
-The product is being built synthetic-first so we can demonstrate the workflow safely before introducing a compliant production architecture for sensitive healthcare and legal data.
+The project is being developed synthetic-first so the workflow, provenance model and human-review controls can mature before sensitive healthcare or legal data is introduced.
