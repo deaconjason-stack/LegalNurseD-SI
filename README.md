@@ -8,21 +8,20 @@ LegalNurseD SI is a zero-cost, standalone demonstration of an evidence-linked le
 - Synthetic long-term-care fall case
 - Guided “Lexi” review assistant simulation
 - Evidence-linked medical chronology
-- Fact vs. reviewer-observation separation
 - Clinical red-flag review prompts
 - Record inventory and missing-record tracking
 - Reviewer notes saved only in the local browser
 - Draft attorney-ready case-review packet
 - Print / Save-as-PDF export for the synthetic packet
-- Installable progressive web app foundation with offline cache
+- No build tools, paid hosting, or external application dependencies required
 
 ## Run locally
 
-Open `index.html` directly for the basic demo. For install/offline support, serve this folder from any static web server or deploy it to a static host.
+Open `index.html` directly in a modern browser. The current MVP is intentionally packaged as a single standalone file so it can be copied, demonstrated, and deployed almost anywhere.
 
 ## Zero-cost deployment choices
 
-This repository is intentionally portable. It can be deployed to GitHub Pages, Cloudflare Pages, or another static host without changing the application architecture.
+This repository is intentionally portable. It can be deployed to GitHub Pages, Cloudflare Pages, or another static host without changing the application.
 
 ## Safety boundary
 
@@ -49,4 +48,4 @@ The production build should add:
 
 Current version: **Portable MVP v0.2**
 
-Built as a synthetic demonstration first so the product can be developed and shown safely before a compliant production architecture is introduced.
+The product is being built synthetic-first so we can demonstrate the workflow safely before introducing a compliant production architecture for sensitive healthcare and legal data.
