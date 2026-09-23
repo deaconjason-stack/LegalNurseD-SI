@@ -1,11 +1,17 @@
 import {resolve} from 'node:path';
 import {createCaseStore,createPartnerStore,createSessionStore,createMessageStore,createEventStore} from './stores.js';
+import {createRemoteJsonStore} from './remote-json-store.js';
 import {createCaseService} from './case-service.js'; import {createMessageService} from './message-service.js'; import {createAvailabilityService,availabilityFreshness} from './availability-service.js'; import {computeWorkflowFlags} from './sla.js';
 import {issueMagicLink,redeemMagicLink,authenticatePartner,authenticateCaseSecret,requireCsrf,hashSecret} from './auth.js'; import {createRateLimiter} from './rate-limit.js';
 import {readJson,sendJson} from '../api.js'; import {personProjection,partnerProjection} from '../../shared-handoffs.mjs';
 function safeId(s){return String(s||'').replace(/[^A-Za-z0-9_.-]/g,'_')}
-export function createV4Runtime({dataDir=process.env.WHOLE_STORY_DATA_DIR||resolve('.whole-story-data'),now=()=>new Date()}={}){
- const caseStore=createCaseStore({filePath:resolve(dataDir,'cases.json')}),partnerStore=createPartnerStore({filePath:resolve(dataDir,'partners.json')}),sessionStore=createSessionStore({filePath:resolve(dataDir,'sessions.json')}),messageStore=createMessageStore({filePath:resolve(dataDir,'messages.json')}),eventStore=createEventStore({filePath:resolve(dataDir,'events.json')});
+export function createV4Runtime({dataDir=process.env.WHOLE_STORY_DATA_DIR||resolve('.whole-story-data'),now=()=>new Date(),remoteStoreConfig=null}={}){
+ const envRemote=process.env.WHOLE_STORY_STORE_URL&&process.env.WHOLE_STORY_STORE_KEY&&process.env.WHOLE_STORY_STORE_SECRET?{baseUrl:process.env.WHOLE_STORY_STORE_URL,apiKey:process.env.WHOLE_STORY_STORE_KEY,storageSecret:process.env.WHOLE_STORY_STORE_SECRET}:null;
+ const remote=remoteStoreConfig||envRemote;
+ const makeRemote=(documentKey,initialValue,validate)=>remote?createRemoteJsonStore({...remote,documentKey,initialValue,validate}):null;
+ const arrayValid=v=>({ok:Array.isArray(v),errors:['array_required']});
+ const partnerInitial={organizations:[],users:[],availability:[]},sessionInitial={magicLinks:[],sessions:[]};
+ const caseStore=createCaseStore({filePath:resolve(dataDir,'cases.json'),store:makeRemote('cases',[],arrayValid)}),partnerStore=createPartnerStore({filePath:resolve(dataDir,'partners.json'),store:makeRemote('partners',partnerInitial,v=>({ok:v&&Array.isArray(v.organizations)&&Array.isArray(v.users)&&Array.isArray(v.availability),errors:['partner_store_invalid']}))}),sessionStore=createSessionStore({filePath:resolve(dataDir,'sessions.json'),store:makeRemote('sessions',sessionInitial,v=>({ok:v&&Array.isArray(v.magicLinks)&&Array.isArray(v.sessions),errors:['session_store_invalid']}))}),messageStore=createMessageStore({filePath:resolve(dataDir,'messages.json'),store:makeRemote('messages',[],arrayValid)}),eventStore=createEventStore({filePath:resolve(dataDir,'events.json'),store:makeRemote('events',[],arrayValid)});
  const caseService=createCaseService({caseStore,partnerStore,eventStore,now}); const messageService=createMessageService({messageStore,eventStore,getCase:id=>caseStore.getCase(id),now}); const availabilityService=createAvailabilityService({partnerStore,eventStore,now});
  return{dataDir,now,caseStore,partnerStore,sessionStore,messageStore,eventStore,caseService,messageService,availabilityService,limiters:{invite:createRateLimiter({limit:10,windowMs:3600_000}),redeem:createRateLimiter({limit:20,windowMs:10*60_000}),message:createRateLimiter({limit:60,windowMs:60_000})}};
 }
