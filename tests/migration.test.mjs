@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { migrateV2History } from '../public/modules/migrations.js';
+const writes=[];
+const legacy=JSON.stringify([{id:'v2-1',savedAt:'2026-09-20T00:00:00Z',story:'Need a ride',result:{route:{title:'Access'}}}]);
+const out=await migrateV2History({legacyJson:legacy,writeStory:async s=>writes.push(s)});
+assert.equal(out.migrated,1); assert.equal(out.canRemoveLegacy,true); assert.equal(writes[0].legacySource,'wholeStoryHistory');
+assert.equal(writes[0].rawStory,'Need a ride');
+const failed=await migrateV2History({legacyJson:legacy,writeStory:async()=>{throw new Error('quota')}});
+assert.equal(failed.canRemoveLegacy,false); assert.equal(failed.migrated,0);
+const broken=await migrateV2History({legacyJson:'{bad',writeStory:async()=>{}});
+assert.equal(broken.canRemoveLegacy,false); assert.equal(broken.skipped,1);
+console.log('migration tests passed');

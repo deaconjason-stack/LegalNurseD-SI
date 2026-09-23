@@ -1,0 +1,3 @@
+export {createConsent,buildSharePackage} from '../core/shared-referrals.mjs';
+export function consentWithSelection(fields=[]){const now=new Date().toISOString();return{saveLocally:false,shareScope:'selected_fields',selectedFields:[...new Set(fields)],grantedAt:now,updatedAt:now}}
+export function describeSharePackage(pkg){if(pkg.scope==='none')return['Nothing will be shared.'];const out=[];if(pkg.signals)out.push('Current signals');if(pkg.priority)out.push('Current priority/next step');if(pkg.profile)out.push('Selected profile/contact preference');if(pkg.rawStory!==undefined)out.push('Full current story text');if(pkg.alreadyTried)out.push('Already-tried resource history');return out}

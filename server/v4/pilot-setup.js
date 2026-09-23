@@ -1,0 +1,7 @@
+import {resolve} from 'node:path'; import {createPartnerStore,createSessionStore} from './stores.js'; import {issueMagicLink} from './auth.js';
+function arg(name){const i=process.argv.indexOf(`--${name}`);return i>=0?process.argv[i+1]:null}
+const dataDir=process.env.WHOLE_STORY_DATA_DIR||resolve('.whole-story-data');
+const orgId=arg('org-id'),orgName=arg('org-name'),email=arg('email'),displayName=arg('display-name');
+if(!orgId||!orgName||!email||!displayName){console.error('Usage: npm run pilot:invite -- --org-id <id> --org-name <name> --email <email> --display-name <name>');process.exitCode=2}else{
+ const partnerStore=createPartnerStore({filePath:resolve(dataDir,'partners.json')}); const sessionStore=createSessionStore({filePath:resolve(dataDir,'sessions.json')}); const now=new Date(); await partnerStore.upsertOrganization({id:orgId,name:orgName,resourceIds:[],status:'active',createdAt:now.toISOString(),updatedAt:now.toISOString()}); let user=await partnerStore.findUserByEmail(email); user=await partnerStore.upsertUser({id:user?.id||`user_${Date.now().toString(36)}`,partnerOrgId:orgId,email,displayName,role:'partner_manager',status:'active',createdAt:user?.createdAt||now.toISOString(),updatedAt:now.toISOString()}); const issued=await issueMagicLink({user,sessionStore,now}); console.log(`One-time Whole Story partner sign-in link:\nhttp://localhost:${process.env.PORT||4173}/#partner-login?token=${issued.token}\nExpires: ${issued.expiresAt}`);
+}

@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {exportStoryJson,exportHandoffText,validateImport,previewImport} from '../public/modules/export-import.js';
+const story={schemaVersion:'3.0.0',story:{id:'s1',rawStory:'Need a ride'},profile:null,referrals:[]};
+const json=exportStoryJson(story);assert.equal(JSON.parse(json).story.id,'s1');
+assert.ok(exportHandoffText({scope:'selected_fields',signals:[{domain:'transportation',label:'needs ride'}],priority:{title:'Remove the transportation blocker'}}).includes('needs ride'));
+assert.equal(validateImport(story).ok,true);
+assert.equal(validateImport({schemaVersion:'4.0.0',story:{id:'s1'}}).ok,false);
+assert.equal(validateImport({schemaVersion:'3.0.0',story:{}}).ok,false);
+const p=previewImport(story);assert.equal(p.storyId,'s1');assert.equal(p.willWrite,false);
+console.log('export/import tests passed');

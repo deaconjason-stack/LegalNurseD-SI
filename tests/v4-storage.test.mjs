@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
+import {join} from 'node:path'; import {tmpdir} from 'node:os';
+import {createCaseStore,createMessageStore,createEventStore,createSessionStore} from '../server/v4/stores.js';
+const dir=await mkdtemp(join(tmpdir(),'whole-story-v4-'));
+const cases=createCaseStore({filePath:join(dir,'cases.json')});
+await cases.createCase({id:'c1',partnerOrgId:'o1',resourceId:'r1',status:'delivered',version:1});
+const updated=await cases.updateCase('c1',1,c=>({...c,status:'accepted'})); assert.equal(updated.version,2);
+await assert.rejects(cases.updateCase('c1',1,c=>({...c,status:'rejected'})),e=>e.code==='VERSION_CONFLICT'&&e.current.version===2);
+assert.equal((await cases.listCasesByPartnerOrg('o1')).length,1); assert.equal((await cases.listCasesByPartnerOrg('o2')).length,0);
+const messages=createMessageStore({filePath:join(dir,'messages.json')}); await messages.appendMessage({id:'m1',caseId:'c1',body:'hi'}); assert.equal((await messages.listMessages('c1')).length,1);
+const events=createEventStore({filePath:join(dir,'events.json')}); await events.appendEvent({id:'e1',caseId:'c1',type:'x'}); assert.equal((await events.listEvents('c1')).length,1);
+const sessions=createSessionStore({filePath:join(dir,'sessions.json')}); await assert.rejects(sessions.createSession({sessionToken:'plain'}),/plaintext_secret_field/);
+const corruptPath=join(dir,'corrupt.json'); await writeFile(corruptPath,'{not json'); const corrupt=createCaseStore({filePath:corruptPath}); await assert.rejects(corrupt.getCase('x'),e=>e.code==='STORE_CORRUPT'); assert.equal(await readFile(corruptPath,'utf8'),'{not json');
+console.log('v4 storage tests passed');

@@ -1,0 +1,11 @@
+import {analyzeStoryV3} from '../core/shared-analyzer.mjs';
+import {routeStory} from '../core/shared-routing.mjs';
+import {deadEndFeedbackForCase} from '../core/shared-handoffs.mjs';
+const uuid=()=>globalThis.crypto?.randomUUID?.()??`evt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+export const CHANGE_TYPES=Object.freeze(['nothing_changed','something_got_better','something_got_worse','tried_next_step','add_something','start_fresh']);
+export function createTimelineEvent({storyId,type,actor='user',summary='',delta='',createdAt=new Date().toISOString()}){if(!storyId)throw new TypeError('story_id_required');if(!['user','navigator','system'].includes(actor))throw new TypeError('invalid_actor');return{id:uuid(),storyId,type,actor,summary,delta,createdAt}}
+export function applyStoryUpdate({story,updateText='',changeType='add_something',actor='user',now=new Date().toISOString()}){if(!story?.id)throw new TypeError('story_required');if(!CHANGE_TYPES.includes(changeType))throw new TypeError('invalid_change_type');const delta=String(updateText||'').trim();const analysis=delta?analyzeStoryV3(delta,{existingSignals:story.signals||[]}):{signals:story.signals||[],urgent:false,urgentLabel:null,urgentMessage:null};const newRoute=routeStory({...analysis,signals:analysis.signals});const event=createTimelineEvent({storyId:story.id,type:changeType,actor,summary:summaryFor(changeType),delta,createdAt:now});const nextStory={...story,signals:analysis.signals,priority:newRoute,updatedAt:now,timeline:[...(story.timeline||[]),event]};return{nextStory,newSignals:analysis.signals,newRoute,event}}
+export function alreadyTriedFromReferrals(referrals=[]){const dead=new Set(['not_eligible','no_availability','wrong_service','too_expensive','transportation_barrier','language_accessibility_barrier','could_not_reach']);return [...new Set(referrals.filter(r=>dead.has(r.outcome)).map(r=>r.resourceId))]}
+function summaryFor(t){return({nothing_changed:'Nothing changed',something_got_better:'Something got better',something_got_worse:'Something got worse',tried_next_step:'Tried the next step',add_something:'Added something',start_fresh:'Started fresh'})[t]||t}
+
+export function alreadyTriedFromLiveCases(cases=[]){return cases.map(deadEndFeedbackForCase).filter(Boolean)}

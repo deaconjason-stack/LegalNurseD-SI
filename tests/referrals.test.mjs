@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {createConsent,buildSharePackage,createReferral,transitionReferral} from '../shared-referrals.mjs';
+const consent=createConsent();assert.deepEqual(consent,{saveLocally:false,shareScope:'none',selectedFields:[],grantedAt:null,updatedAt:null});
+const pkg=buildSharePackage({story:{rawStory:'private raw text'},signals:[{domain:'transportation',label:'needs ride',status:'active'}],priority:{priorityDomain:'transportation'},profile:{displayName:'Jay',preferredContactMethod:'text'},consent:{shareScope:'selected_fields',selectedFields:['signals','priority']}});
+assert.equal('rawStory' in pkg,false);assert.equal('displayName' in pkg,false);assert.equal(pkg.signals.length,1);assert.equal(pkg.priority.priorityDomain,'transportation');
+const none=buildSharePackage({story:{rawStory:'secret'},signals:[],priority:{},profile:{},consent:createConsent()});assert.deepEqual(none,{scope:'none'});
+const ref=createReferral({storyId:'s1',resourceId:'r1',sharePackage:pkg});assert.equal(ref.status,'draft');
+const shared=transitionReferral(ref,'shared','2026-09-22T12:00:00Z');assert.equal(shared.status,'shared');
+const completed=transitionReferral({...shared,status:'scheduled',history:[...shared.history,{status:'scheduled',at:'2026-09-22T13:00:00Z'}]},'completed','2026-09-23T12:00:00Z');assert.equal(completed.status,'completed');
+assert.throws(()=>transitionReferral(completed,'scheduled'),/invalid_referral_transition/);
+console.log('referral tests passed');

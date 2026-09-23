@@ -1,0 +1,7 @@
+import {matchResources as matchResourcesCore,resourceStatusCopy,verificationState} from '../core/shared-resources.mjs';
+export {resourceStatusCopy,verificationState};
+export function matchResources(options={}){const availabilityByResource={...(options.availabilityByResource||{})};for(const r of options.resources||[])if(r.availability&&!availabilityByResource[r.id])availabilityByResource[r.id]=r.availability;return matchResourcesCore({...options,availabilityByResource})}
+export async function loadDemoResources(){const r=await fetch('./data/resources.demo.json');if(!r.ok)throw new Error('resource_directory_unavailable');const data=await r.json();if(typeof localStorage!=='undefined' && navigator.onLine!==false && r.headers.get('x-whole-story-cache')!=='hit')localStorage.setItem('wholeStoryDirectorySnapshotAt',new Date().toISOString());return data}
+export function directorySnapshotAt(){return typeof localStorage==='undefined'?null:localStorage.getItem('wholeStoryDirectorySnapshotAt')}
+export function directoryStatus(){const at=directorySnapshotAt();return navigator.onLine===false&&at?`Cached directory — last updated ${new Date(at).toLocaleString()}`:at?`Directory snapshot updated ${new Date(at).toLocaleString()}`:'Directory snapshot time unavailable'}
+export function searchResources(resources,query=''){const q=query.trim().toLowerCase();if(!q)return resources;return resources.filter(r=>[r.name,r.description,r.eligibilitySummary,...(r.serviceDomains||[])].join(' ').toLowerCase().includes(q))}

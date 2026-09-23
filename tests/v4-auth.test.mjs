@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict'; import {mkdtemp} from 'node:fs/promises'; import {join} from 'node:path'; import {tmpdir} from 'node:os';
+import {createSessionStore,createPartnerStore} from '../server/v4/stores.js'; import {issueMagicLink,redeemMagicLink,issueCaseAccessSecret,authenticatePartner,requireCsrf,hashSecret} from '../server/v4/auth.js'; import {createRateLimiter} from '../server/v4/rate-limit.js';
+const dir=await mkdtemp(join(tmpdir(),'ws-auth-')); const sessionStore=createSessionStore({filePath:join(dir,'sessions.json')}); const partnerStore=createPartnerStore({filePath:join(dir,'partners.json')});
+await partnerStore.upsertOrganization({id:'o1',name:'Org',resourceIds:['r1'],status:'active'}); await partnerStore.upsertUser({id:'u1',partnerOrgId:'o1',email:'a@example.com',displayName:'A',role:'partner_manager',status:'active'}); const user=await partnerStore.getUser('u1');
+const now=new Date('2026-09-23T10:00:00Z'); const issued=await issueMagicLink({user,sessionStore,now}); assert.ok(issued.token.length>=43); const persisted=(await sessionStore._debugMagicLinks())[0]; assert.notEqual(persisted.tokenHash,issued.token); assert.equal(Object.values(persisted).includes(issued.token),false);
+const redeemed=await redeemMagicLink({token:issued.token,sessionStore,partnerStore,now}); assert.ok(redeemed.sessionToken.length>=43); await assert.rejects(redeemMagicLink({token:issued.token,sessionStore,partnerStore,now}),/INVALID_OR_EXPIRED_TOKEN/); const exp=await issueMagicLink({user,sessionStore,now}); await assert.rejects(redeemMagicLink({token:exp.token,sessionStore,partnerStore,now:new Date('2026-09-23T11:00:00Z')}),/INVALID_OR_EXPIRED_TOKEN/);
+const fakeReq={headers:{authorization:`Bearer ${redeemed.sessionToken}`}}; const auth=await authenticatePartner(fakeReq,{sessionStore,now}); assert.equal(auth.userId,'u1');
+await sessionStore.revokeSession(hashSecret(redeemed.sessionToken)); await assert.rejects(authenticatePartner(fakeReq,{sessionStore,now}),/UNAUTHORIZED/);
+const c=issueCaseAccessSecret(); assert.ok(c.secret.length>=43); assert.notEqual(c.secret,c.hash);
+const limiter=createRateLimiter({limit:2,windowMs:1000}); assert.equal(limiter.take('x',0).allowed,true); assert.equal(limiter.take('x',1).allowed,true); assert.equal(limiter.take('x',2).allowed,false);
+assert.throws(()=>requireCsrf({headers:{}},{authMode:'cookie',csrfHash:'abc'}),/CSRF_REQUIRED/);
+console.log('v4 auth tests passed');

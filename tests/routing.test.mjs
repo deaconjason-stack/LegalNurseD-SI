@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { routeStory } from '../shared-routing.mjs';
+const urgent = routeStory({signals:[{domain:'housing',status:'active'}], urgent:true, urgentLabel:'possible medical emergency', urgentMessage:'Call emergency services.'});
+assert.equal(urgent.priorityDomain, 'safety');
+assert.equal(urgent.userOverrideAllowed, false);
+const basic = routeStory({signals:[{domain:'food',label:'no food today',status:'active'}], urgent:false});
+assert.equal(basic.priorityDomain, 'food');
+const overridden = routeStory({signals:[{domain:'transportation',status:'active'},{domain:'financial_pressure',status:'active'}],urgent:false,userPriority:'financial_pressure'});
+assert.equal(overridden.priorityDomain, 'financial_pressure');
+assert.equal(overridden.userOverrideAllowed, true);
+const healthAccess = routeStory({signals:[{domain:'health_care',status:'active'},{domain:'transportation',status:'active'}],urgent:false});
+assert.equal(healthAccess.priorityDomain,'transportation');
+console.log('routing tests passed');

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {createTimelineEvent,applyStoryUpdate,alreadyTriedFromReferrals} from '../public/modules/timeline.js';
+const story={id:'s1',rawStory:'I need a ride.',signals:[],createdAt:'2026-09-20T00:00:00Z',updatedAt:'2026-09-20T00:00:00Z',timeline:[]};
+const out=applyStoryUpdate({story,updateText:'I got a ride but now I am behind on rent.',changeType:'something_got_worse',actor:'user',now:'2026-09-22T00:00:00Z'});
+assert.equal(out.nextStory.rawStory,'I need a ride.');
+assert.equal(out.event.delta,'I got a ride but now I am behind on rent.');
+assert.equal(out.nextStory.updatedAt,'2026-09-22T00:00:00Z');
+assert.ok(out.newSignals.some(s=>s.domain==='housing'||s.domain==='financial_pressure'));
+const event=createTimelineEvent({storyId:'s1',type:'referral_outcome',actor:'navigator',summary:'Not eligible',delta:'not_eligible',createdAt:'2026-09-22T01:00:00Z'});assert.equal(event.actor,'navigator');
+assert.deepEqual(alreadyTriedFromReferrals([{resourceId:'r1',outcome:'not_eligible'},{resourceId:'r2',outcome:null},{resourceId:'r3',outcome:'no_availability'}]),['r1','r3']);
+console.log('timeline tests passed');

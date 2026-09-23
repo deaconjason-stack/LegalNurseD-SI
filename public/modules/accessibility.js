@@ -1,0 +1,3 @@
+export function applyAccessibility({largeText=false,highContrast=false,reducedMotion=false}={}){const root=document.documentElement;root.dataset.largeText=String(Boolean(largeText));root.dataset.highContrast=String(Boolean(highContrast));root.dataset.reducedMotion=String(Boolean(reducedMotion));return{largeText:Boolean(largeText),highContrast:Boolean(highContrast),reducedMotion:Boolean(reducedMotion)}}
+export function readAccessibility(){if(typeof localStorage==='undefined')return{largeText:false,highContrast:false,reducedMotion:false};try{return JSON.parse(localStorage.getItem('wholeStoryAccessibility')||'{}')}catch{return{}}}
+export function saveAccessibility(prefs){localStorage.setItem('wholeStoryAccessibility',JSON.stringify(prefs));return applyAccessibility(prefs)}

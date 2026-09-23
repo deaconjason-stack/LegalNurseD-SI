@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict'; import {mkdtemp} from 'node:fs/promises'; import {join} from 'node:path'; import {tmpdir} from 'node:os'; import {createMessageStore,createEventStore} from '../server/v4/stores.js'; import {createMessageService} from '../server/v4/message-service.js';
+const dir=await mkdtemp(join(tmpdir(),'ws-msg-')); const messageStore=createMessageStore({filePath:join(dir,'messages.json')}); const eventStore=createEventStore({filePath:join(dir,'events.json')}); const cases=new Map([['c1',{id:'c1',partnerOrgId:'o1',futureSharingWithdrawn:false}]]); const svc=createMessageService({messageStore,eventStore,getCase:async id=>cases.get(id),now:()=>new Date('2026-09-23T10:00:00Z')}); const ctx={caseId:'c1',actor:{type:'person',id:null},authorize:()=>true}; await assert.rejects(svc.postMessage({...ctx,body:'x'.repeat(4001)}),/message_too_long/); const body='<img src=x onerror=alert(1)>'; const m=await svc.postMessage({...ctx,body}); assert.equal(m.body,body); assert.equal(m.systemGenerated,false); const u='😀'.repeat(4000); assert.equal((await svc.postMessage({...ctx,body:u})).body.length>4000,true); await assert.rejects(svc.postMessage({...ctx,body:'😀'.repeat(4001)}),/message_too_long/); await svc.requestInformation({caseId:'c1',actor:{type:'partner',id:'u1'},fields:['income range']}); cases.get('c1').futureSharingWithdrawn=true; await assert.rejects(svc.shareRequestedInformation({caseId:'c1',actor:{type:'person'},fields:{'income range':'under 50k'}}),/future_sharing_withdrawn/); console.log('v4 message tests passed');
+// Final review: information requests must be visible in the case message thread.
+cases.get('c1').futureSharingWithdrawn=false;
+await svc.requestInformation({caseId:'c1',actor:{type:'partner',id:'u1',displayName:'Navigator'},fields:['proof of address','preferred call time'],authorize:()=>true});
+const requestedMessages=await svc.listAuthorizedMessages({caseId:'c1',authorize:()=>true});
+const requestNotice=requestedMessages.at(-1);
+assert.equal(requestNotice.systemGenerated,true);
+assert.match(requestNotice.body,/proof of address/i);
+assert.match(requestNotice.body,/preferred call time/i);

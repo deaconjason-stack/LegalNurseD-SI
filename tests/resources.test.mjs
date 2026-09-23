@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {validateResource,verificationState,matchResources} from '../shared-resources.mjs';
+const resource={id:'demo-food-1',name:'Demo Pantry',description:'Demo',serviceDomains:['food'],serviceArea:['St. Louis County, MO'],delivery:['in_person'],languages:['en'],active:true,isDemo:true,verification:{status:'verified',verifiedAt:'2026-09-01T00:00:00Z',verifiedBy:'local-admin',notes:''}};
+assert.equal(validateResource(resource).ok,true);
+assert.equal(verificationState(resource,new Date('2026-09-22T00:00:00Z'),30),'verified');
+assert.equal(verificationState(resource,new Date('2026-11-22T00:00:00Z'),30),'stale');
+assert.equal(verificationState({...resource,verification:{status:'unverified',verifiedAt:null}},new Date(),30),'unverified');
+const alt={...resource,id:'demo-food-2',name:'Demo Pantry 2'};
+const matches=matchResources({resources:[resource,alt],signals:[{domain:'food',status:'active'}],serviceArea:'St. Louis County, MO',language:'en',alreadyTried:['demo-food-1']});
+assert.equal(matches[0].resource.id,'demo-food-2');
+assert.ok(matches[0].reasons.some(x=>x.includes('food')));
+assert.equal(matches.at(-1).alreadyTried,true);
+assert.equal(validateResource({...resource,isDemo:false,name:''}).ok,false);
+console.log('resource tests passed');

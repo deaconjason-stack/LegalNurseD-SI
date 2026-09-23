@@ -1,0 +1,32 @@
+{
+  "name": "Whole Story V4 \u2014 Closed-Loop Human Handoffs",
+  "short_name": "Whole Story V4",
+  "description": "Consent-first whole-person navigation with closed-loop human handoffs.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f3e9",
+  "theme_color": "#f7f3e9",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start a New Story",
+      "url": "./#intake"
+    },
+    {
+      "name": "Guide Me Through It",
+      "url": "./#guided"
+    },
+    {
+      "name": "My Next Step",
+      "url": "./#next-step"
+    }
+  ]
+}
